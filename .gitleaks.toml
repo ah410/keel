@@ -1,0 +1,11 @@
+# Gitleaks config for CI and local scans: the default rules, minus three files of made-up test data.
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Dummy SCRAM test vector, placeholder vault keys and the mock server's fake API key"
+paths = [
+  '''(^|/)app/src/test/kotlin/com/arceusvault/keel/core/network/ScramTest\.kt$''',
+  '''(^|/)app/src/test/kotlin/com/arceusvault/keel/core/security/VaultTest\.kt$''',
+  '''(^|/)tools/mock-truenas/mock_truenas\.py$''',
+]

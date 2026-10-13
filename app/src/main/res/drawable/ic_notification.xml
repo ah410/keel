@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Status bar version of the mark, cropped to the launcher icon's safe zone. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="66"
+    android:viewportHeight="66">
+    <group android:translateX="-21" android:translateY="-19">
+        <path android:fillColor="#FFFFFFFF" android:pathData="M53,22V44H34ZM57,26V44H72ZM24,47H86L76,60H35Q27,57 24,47ZM50,59H61L57,75H50ZM45,73H63A3,3 0,0 1,63 79H45A3,3 0,0 1,45 73Z" />
+    </group>
+</vector>

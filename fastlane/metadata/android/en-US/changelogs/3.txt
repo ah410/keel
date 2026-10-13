@@ -1,0 +1,1 @@
+First public release as Keel: new name and look, app settings editing, share create, edit and delete, and the role table read from the server.

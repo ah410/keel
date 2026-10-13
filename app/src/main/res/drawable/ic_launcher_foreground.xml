@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Keel's mark: a sailboat with its keel below the waterline. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path android:fillColor="#FFF4A259" android:pathData="M53,22V44H34Z" />
+    <path android:fillColor="#BFF4A259" android:pathData="M57,26V44H72Z" />
+    <path android:fillColor="#FF34C3B0" android:pathData="M24,47H86L76,60H35Q27,57 24,47ZM50,59H61L57,75H50ZM45,73H63A3,3 0,0 1,63 79H45A3,3 0,0 1,45 73Z" />
+    <path
+        android:strokeColor="#735FD4C4"
+        android:strokeWidth="2.5"
+        android:strokeLineCap="round"
+        android:pathData="M26,66q4,-2.5 8,0t8,0M66,66q4,-2.5 8,0t8,0" />
+</vector>

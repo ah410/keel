@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The launcher mark on its own rounded tile, for in-app branding. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="72dp"
+    android:height="72dp"
+    android:viewportWidth="72"
+    android:viewportHeight="72">
+    <path android:fillColor="#FF0E161C" android:pathData="M16,0H56A16,16 0,0 1,72 16V56A16,16 0,0 1,56 72H16A16,16 0,0 1,0 56V16A16,16 0,0 1,16 0Z" />
+    <group android:translateX="-18" android:translateY="-15">
+        <path android:fillColor="#FFF4A259" android:pathData="M53,22V44H34Z" />
+        <path android:fillColor="#BFF4A259" android:pathData="M57,26V44H72Z" />
+        <path android:fillColor="#FF34C3B0" android:pathData="M24,47H86L76,60H35Q27,57 24,47ZM50,59H61L57,75H50ZM45,73H63A3,3 0,0 1,63 79H45A3,3 0,0 1,45 73Z" />
+    </group>
+</vector>

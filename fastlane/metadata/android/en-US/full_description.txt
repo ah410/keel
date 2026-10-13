@@ -1,0 +1,23 @@
+<p>Keel is a mobile client for TrueNAS Community Edition (SCALE). Check your server's health, manage apps, run backups and handle alerts from your phone, without exposing anything to the internet.</p>
+
+<p><b>What it does</b></p>
+<ul>
+<li>Live dashboard with CPU, memory, network and pool health</li>
+<li>Apps: live usage, start, stop, redeploy, upgrade with changelog, roll back, edit configuration, container logs</li>
+<li>Storage: pools, datasets, snapshots, scrubs, and snapshot, replication and cloud sync tasks</li>
+<li>Alerts with optional background notifications</li>
+<li>Services, updates, reporting graphs, boot environments, network and audit log</li>
+<li>VMs, LXC containers, SMB and NFS shares, users</li>
+<li>Several servers, with a home screen widget for alert counts</li>
+</ul>
+
+<p><b>Built for security</b></p>
+<ul>
+<li>Signs in with SCRAM-SHA-512, so your API key never crosses the network</li>
+<li>Stores only derived keys, encrypted in the Android Keystore behind your fingerprint or PIN</li>
+<li>Pins self-signed certificates and refuses public addresses unless you opt in</li>
+<li>Only shows the actions your API key's roles allow, with stricter confirmation for riskier ones</li>
+<li>No analytics, ads, crash reporting or Google services. It talks only to your server.</li>
+</ul>
+
+<p>Keel is an independent open source project and is not affiliated with, endorsed by or sponsored by TrueNAS or iXsystems. TrueNAS is a registered trademark of iXsystems, Inc.</p>

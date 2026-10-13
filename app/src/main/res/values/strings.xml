@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">Keel</string>
+    <string name="widget_description">Alert count and severity from the background alert check. Shows no alert text.</string>
+</resources>

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Cleartext is never allowed and only system CAs are trusted (user-installed CAs are ignored).
+     Self-signed TrueNAS certs are handled by the app's own TOFU pinning, not by this file. -->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+</network-security-config>
