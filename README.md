@@ -52,6 +52,10 @@ builds are reproducible and signed with this certificate:
 SHA-256: 47:BA:2B:A3:EA:64:C6:EF:9B:53:26:73:25:C5:CE:B1:AC:95:96:5F:AE:C9:19:87:BD:6F:E2:D5:EA:60:3E:DA
 ```
 
+To look around before setting anything up, tap "Try a demo server" on the first screen. It runs
+the whole app on built-in sample data, makes no network connections and forgets your changes when
+you leave.
+
 ## Features
 
 What Keel can change depends entirely on the API key you give it. TrueNAS keys carry roles, and the

@@ -100,6 +100,13 @@ private fun Welcome(vm: SetupViewModel) {
             Text("Set a PIN, pattern or password in Android settings first. Your credentials are protected by it.")
         }
     }
+    val context = LocalContext.current
+    OutlinedButton({ vm.startDemo(context) }, Modifier.fillMaxWidth()) { Text("Try a demo server") }
+    Text(
+        "Explore Keel with sample data. Nothing connects to the network and changes are thrown away when you leave.",
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
 }
 
 @Composable

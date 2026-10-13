@@ -1,0 +1,1 @@
+Adds a demo mode: tap "Try a demo server" on the first screen to explore Keel with sample data and no network.

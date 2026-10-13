@@ -127,7 +127,7 @@ const val LOG_SEP = "\u0002"
 private fun MainScaffold(container: AppContainer, state: SessionManager.State.Connected) {
     val nav = rememberNavigator()
     val p = LocalPalette.current
-    val server = remember(state) { ServerContext(state.api, state.roles, state.profile, container.operations) }
+    val server = remember(state) { ServerContext(state.api, state.roles, state.profile, container.operations, state.demo) }
     val snackbar = remember { SnackbarHostState() }
     val jobs by state.api.jobs.jobs.collectAsState()
     val activeJobs = jobs.count { !it.finished }
@@ -167,6 +167,7 @@ private fun MainScaffold(container: AppContainer, state: SessionManager.State.Co
                                 )
                                 // Persistent badge whenever the connection crosses the internet.
                                 if (state.profile.mode == ConnectionMode.DIRECT) Pill("Direct", StatusColors.warn)
+                                if (state.demo) Pill("Demo", StatusColors.info)
                             }
                         },
                         navigationIcon = {

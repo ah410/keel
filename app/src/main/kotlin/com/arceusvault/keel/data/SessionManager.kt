@@ -2,6 +2,8 @@ package com.arceusvault.keel.data
 
 import com.arceusvault.keel.core.network.ConnectionClosedException
 import com.arceusvault.keel.core.network.JsonRpcClient
+import com.arceusvault.keel.core.network.RpcChannel
+import com.arceusvault.keel.domain.ConnectionMode
 import com.arceusvault.keel.core.network.PublicAddressException
 import com.arceusvault.keel.core.network.Scram
 import com.arceusvault.keel.core.network.ServerCertificate
@@ -40,7 +42,7 @@ class SessionManager(
         data object NotConfigured : State
         data object Locked : State
         data class Connecting(val profile: ServerProfile, val attempt: Int) : State
-        data class Connected(val profile: ServerProfile, val api: TrueNasApi, val roles: Roles) : State {
+        data class Connected(val profile: ServerProfile, val api: TrueNasApi, val roles: Roles, val demo: Boolean = false) : State {
             val fullAdmin: Boolean get() = roles.fullAdmin
         }
         data class Failed(val profile: ServerProfile, val error: Throwable) : State
@@ -125,6 +127,19 @@ class SessionManager(
                     delay(1_000L shl attempt.coerceAtMost(4))
                 }
             }
+        }
+    }
+
+    /** Runs the app against [open]'s in-memory server; nothing is stored and lock() ends it. */
+    fun startDemo(open: (CoroutineScope) -> RpcChannel) {
+        job?.cancel()
+        closeConnection()
+        val conn = CoroutineScope(SupervisorJob(scope.coroutineContext[Job]) + Dispatchers.Main.immediate)
+        connectionScope = conn
+        val server = open(conn)
+        job = scope.launch {
+            val roles = Roles(DEMO_ROLES, connector.roleIncludes(server))
+            _state.value = State.Connected(DEMO_PROFILE, TrueNasApi(server, json, JobTracker(server, conn)), roles, demo = true)
         }
     }
 
@@ -216,6 +231,13 @@ class SessionManager(
 
     private companion object {
         const val MAX_ATTEMPTS = 4
+        val DEMO_PROFILE = ServerProfile("keel-demo", 443, ConnectionMode.SECURE, CertTrust.CaVerified, "demo", 0)
+        // Everything a phone key would sensibly have, minus power controls.
+        val DEMO_ROLES = listOf(
+            "READONLY_ADMIN", "APPS_WRITE", "ALERT_LIST_WRITE", "SERVICE_WRITE", "SNAPSHOT_WRITE", "SNAPSHOT_DELETE", "POOL_WRITE",
+            "SNAPSHOT_TASK_WRITE", "REPLICATION_TASK_WRITE", "CLOUD_SYNC_WRITE", "SYSTEM_UPDATE_WRITE", "VM_WRITE", "CONTAINER_WRITE",
+            "SHARING_SMB_WRITE", "SHARING_NFS_WRITE",
+        )
     }
 }
 

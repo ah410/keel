@@ -11,6 +11,8 @@ class ServerContext(
     val roles: Roles,
     val profile: ServerProfile,
     val operations: Operations,
+    /** True when running against the built-in demo server. */
+    val demo: Boolean = false,
 )
 
 val LocalServer = staticCompositionLocalOf<ServerContext> { error("No server connected") }

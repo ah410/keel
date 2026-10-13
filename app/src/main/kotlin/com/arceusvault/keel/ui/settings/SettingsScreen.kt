@@ -20,6 +20,7 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import com.arceusvault.keel.ui.components.Button
 import com.arceusvault.keel.ui.components.OutlinedButton
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
@@ -73,7 +74,15 @@ fun SettingsScreen(container: AppContainer, padding: PaddingValues) {
         Modifier.verticalScroll(rememberScrollState()).padding(padding),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        TnCard(title = "Server") {
+        if (server.demo) TnCard(title = "Demo server") {
+            Text(
+                "You're exploring sample data. Nothing here touches a real server, and changes are thrown away when you leave.",
+                style = MaterialTheme.typography.bodyMedium,
+            )
+            Button(container.session::lock, Modifier.fillMaxWidth()) { Text("Leave demo and set up my server") }
+        }
+
+        if (!server.demo) TnCard(title = "Server") {
             KeyValue("Address", profile.displayAddress)
             KeyValue("User", profile.username)
             KeyValue("API key ID", profile.apiKeyId.toString())
@@ -90,11 +99,11 @@ fun SettingsScreen(container: AppContainer, padding: PaddingValues) {
             }
         }
 
-        ServersCard(servers, active.coerceIn(0, (servers.size - 1).coerceAtLeast(0)), container.session::switchTo, container.session::startAdding)
+        if (!server.demo) ServersCard(servers, active.coerceIn(0, (servers.size - 1).coerceAtLeast(0)), container.session::switchTo, container.session::startAdding)
 
         PermissionsCard(server.roles)
 
-        AlertNotificationsCard(container.alertWatch, profile)
+        if (!server.demo) AlertNotificationsCard(container.alertWatch, profile)
 
         TnCard(title = "Theme") {
             val systemDark = isSystemInDarkTheme()
@@ -130,7 +139,7 @@ fun SettingsScreen(container: AppContainer, padding: PaddingValues) {
         }
 
         OutlinedButton({ licenses = true }, Modifier.fillMaxWidth()) { Text("Open source licenses") }
-        OutlinedButton({ confirmForget = true }, Modifier.fillMaxWidth()) {
+        if (!server.demo) OutlinedButton({ confirmForget = true }, Modifier.fillMaxWidth()) {
             Text("Forget this server", color = StatusColors.bad)
         }
         Text(

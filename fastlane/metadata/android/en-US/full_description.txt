@@ -11,6 +11,8 @@
 <li>Several servers, with a home screen widget for alert counts</li>
 </ul>
 
+<p>Want to look around first? Tap "Try a demo server" to explore every screen with sample data, no server needed.</p>
+
 <p><b>Built for security</b></p>
 <ul>
 <li>Signs in with SCRAM-SHA-512, so your API key never crosses the network</li>

@@ -44,6 +44,12 @@ class SetupViewModel(private val c: AppContainer, val adding: Boolean = false) :
 
     fun start() { step = Step.MODE }
 
+    /** Opens the built-in demo server: bundled sample data, no network, nothing stored. */
+    fun startDemo(context: android.content.Context) {
+        val text = context.assets.open("demo/server.json").bufferedReader().use { it.readText() }
+        c.session.startDemo { scope -> com.arceusvault.keel.data.DemoServer.load(text, scope) }
+    }
+
     fun chooseMode(m: ConnectionMode) {
         mode = m
         step = if (m == ConnectionMode.DIRECT) Step.DIRECT_WARNING else Step.DETAILS
