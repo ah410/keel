@@ -1,0 +1,26 @@
+name: Snyk
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    - cron: '30 5 * * 1'
+permissions:
+  contents: read
+jobs:
+  dependencies:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      # The prebuilt Snyk Gradle images have no Android SDK, so run the CLI on the runner instead.
+      - uses: snyk/actions/setup@master
+      - name: Snyk Open Source (shipped dependencies)
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        run: >
+          snyk test --file=app/build.gradle.kts --configuration-matching='^releaseRuntimeClasspath$'
+          --severity-threshold=high -- --dependency-verification=lenient
