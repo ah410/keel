@@ -9,3 +9,8 @@ paths = [
   '''(^|/)app/src/test/kotlin/com/arceusvault/keel/core/security/VaultTest\.kt$''',
   '''(^|/)tools/mock-truenas/mock_truenas\.py$''',
 ]
+
+[[allowlists]]
+description = "F-Droid's AllowedAPKSigningKeys is the public signing certificate's SHA-256, not a secret"
+regexTarget = "line"
+regexes = ['''^AllowedAPKSigningKeys: [0-9a-f]{64}$''']
