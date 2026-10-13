@@ -1,6 +1,7 @@
 package com.arceusvault.keel.data
 
 import com.arceusvault.keel.core.network.JsonRpcClient
+import com.arceusvault.keel.core.network.RpcChannel
 import com.arceusvault.keel.core.network.RawApiKey
 import com.arceusvault.keel.core.network.Scram
 import com.arceusvault.keel.core.network.trustedHttp
@@ -60,7 +61,7 @@ class Connector(private val json: Json) {
     }
 
     /** The server's role inheritance table. Any session may read it; on failure only granted roles count. */
-    private suspend fun roleIncludes(rpc: JsonRpcClient): Map<String, List<String>> = runCatching {
+    internal suspend fun roleIncludes(rpc: RpcChannel): Map<String, List<String>> = runCatching {
         val params = buildJsonArray {
             add(JsonArray(emptyList()))
             add(buildJsonObject { put("select", buildJsonArray { add(JsonPrimitive("name")); add(JsonPrimitive("includes")) }) })

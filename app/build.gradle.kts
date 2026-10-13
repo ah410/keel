@@ -23,8 +23,8 @@ android {
         // API 30 is the floor for auth-bound Keystore keys that accept biometric OR device credential.
         minSdk = 30
         targetSdk = 36
-        versionCode = 3
-        versionName = "1.0.0"
+        versionCode = 4
+        versionName = "1.1.0"
     }
 
     signingConfigs {

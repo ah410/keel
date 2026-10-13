@@ -1,0 +1,29 @@
+Categories:
+  - Connectivity
+  - System
+License: Apache-2.0
+AuthorName: Ali Hamad
+SourceCode: https://github.com/ah410/keel
+IssueTracker: https://github.com/ah410/keel/issues
+Changelog: https://github.com/ah410/keel/releases
+
+AutoName: Keel
+
+RepoType: git
+Repo: https://github.com/ah410/keel.git
+Binaries: https://github.com/ah410/keel/releases/download/v%v/keel-%v.apk
+
+Builds:
+  - versionName: 1.0.0
+    versionCode: 3
+    commit: 6e4b69268411befed614e0b18d3c94e38e4c03d4
+    subdir: app
+    gradle:
+      - yes
+
+AllowedAPKSigningKeys: 47ba2ba3ea64c6ef9b53267325c5ceb1ac95965faec91987bd6fe2d5ea603eda
+
+AutoUpdateMode: Version
+UpdateCheckMode: Tags ^v[0-9.]+$
+CurrentVersion: 1.0.0
+CurrentVersionCode: 3

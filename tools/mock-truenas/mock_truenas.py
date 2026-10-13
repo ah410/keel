@@ -35,7 +35,7 @@ def H(k, m): return hmac.new(k, m.encode() if isinstance(m, str) else m, hashlib
 
 CLIENT_KEY = H(SALTED, "Client Key"); STORED = hashlib.sha512(CLIENT_KEY).digest(); SERVER_KEY = H(SALTED, "Server Key")
 GiB = 1024**3; TiB = 1024**4
-now = time.time()
+now = float(os.environ.get("MOCK_NOW") or time.time())
 
 def iso(t): return time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(t))
 
@@ -141,12 +141,54 @@ def snaps(ds):
             properties=dict(used=dict(raw=str(1024**2*(i+1)*37), value=1024**2*(i+1)*37, source=None), referenced=dict(raw="1", value=5*TiB, source=None), creation=dict(raw=str(t), value=t, source=None))))
     return out
 
-SYSINFO = dict(version="26.0.0-BETA.1", hostname="arceusvault", physmem=64*GiB, model="AMD Ryzen 7 5700G with Radeon Graphics", cores=16, physical_cores=8,
+SYSINFO = dict(version="26.0.0-BETA.1", hostname=os.environ.get("MOCK_HOSTNAME", "arceusvault"), physmem=64*GiB, model="AMD Ryzen 7 5700G with Radeon Graphics", cores=16, physical_cores=8,
                loadavg=[0.82, 0.71, 0.66], uptime_seconds=86400*12+3600*5, ecc_memory=False, system_product="B550M AORUS ELITE", system_manufacturer="Gigabyte Technology Co., Ltd.")
 
 job_id = [100]
 alert_logins = [0]
 KEY_ROLES = {"8": ["ALERT_LIST_READ"], "9": ["READONLY_ADMIN"]}
+
+def responses(params):
+    """Canned answers by method; lambdas so only the requested one is computed."""
+    return {
+      "system.info": lambda: SYSINFO, "auth.me": lambda: {}, "privilege.roles": lambda: ROLE_TABLE, "pool.query": lambda: POOLS, "disk.query": lambda: DISKS,
+      "disk.temperatures": lambda: {d["name"]: 34 + i for i, d in enumerate(DISKS)},
+      "alert.list": lambda: ALERTS, "service.query": lambda: SERVICES,
+      "app.query": lambda: app_query(params),
+      "filesystem.listdir": lambda: [dict(name=n, path=f"{params[0].rstrip('/')}/{n}", type="DIRECTORY") for n in DIRS.get(params[0].rstrip('/'), [])],
+      "app.upgrade_summary": lambda: dict(latest_version="1.3.0", latest_human_version="10.11.0_1.3.0", upgrade_version="1.3.0", upgrade_human_version="10.11.0_1.3.0",
+          available_versions_for_upgrade=[dict(version="1.3.0", human_version="10.11.0_1.3.0", changelog="<p>Jellyfin 10.11.0 with library performance improvements.</p>")]),
+      "app.rollback_versions": lambda: ["1.1.9", "1.1.8"],
+      "pool.dataset.query": lambda: DATASETS, "zfs.resource.snapshot.query": lambda: snaps(params[0]["paths"][0] if params[0]["paths"] else "tank"),
+      "pool.snapshottask.query": lambda: [dict(id=1, dataset="tank/media", recursive=True, lifetime_value=2, lifetime_unit="WEEK", enabled=True, naming_schema="auto-%Y-%m-%d_%H-%M",
+            schedule=dict(minute="0", hour="0", dom="*", month="*", dow="*"), state=dict(state="FINISHED", datetime={"$date": int((now-3600*2)*1000)}))],
+      "replication.query": lambda: [dict(id=1, name="tank/media to backup box", direction="PUSH", transport="SSH", source_datasets=["tank/media"], target_dataset="backup/media", enabled=True, auto=True,
+            state=dict(state="ERROR", datetime={"$date": int((now-86400)*1000)}, error="ssh: connect to host 10.0.0.9 port 22: No route to host"))],
+      "cloudsync.query": lambda: [dict(id=1, description="Photos to B2", path="/mnt/tank/apps/immich", direction="PUSH", transfer_mode="SYNC", enabled=True,
+            schedule=dict(minute="0", hour="3", dom="*", month="*", dow="*"), credentials=dict(name="Backblaze B2"), job=dict(state="SUCCESS", time_finished=iso(now-80000)))],
+      "pool.scrub.query": lambda: [dict(id=1, pool=1, pool_name="tank", threshold=35, description="", enabled=True, schedule=dict(minute="00", hour="00", dom="*", month="*", dow="7"))],
+      "update.status": lambda: dict(code="NORMAL", status=dict(current_version=dict(train="TrueNAS-SCALE-Goldeye", profile="GENERAL", matches_profile=True),
+            new_version=dict(version="26.0.0-BETA.2", manifest={}, release_notes="Bug fixes and improvements to the apps subsystem.", release_notes_url="https://www.truenas.com/docs/")), error=None, update_download_progress=None),
+      "boot.environment.query": lambda: [dict(id="26.0.0-BETA.1", dataset="boot-pool/ROOT/26.0.0-BETA.1", active=True, activated=True, created=iso(now-86400*12), used_bytes=3*GiB, keep=False, can_activate=True),
+            dict(id="25.10.2", dataset="boot-pool/ROOT/25.10.2", active=False, activated=False, created=iso(now-86400*60), used_bytes=int(2.8*GiB), keep=True, can_activate=True)],
+      "interface.query": lambda: [dict(id="enp6s0", name="enp6s0", type="PHYSICAL", description="", mtu=1500, ipv4_dhcp=False, aliases=[dict(type="INET", address="192.168.0.78", netmask=24)],
+            state=dict(link_state="LINK_STATE_UP", link_address="d8:5e:d3:00:11:22", active_media_subtype="2500Base-T", aliases=[dict(type="INET", address="192.168.0.78", netmask=24)]))],
+      "audit.query": lambda: [dict(audit_id=f"x{i}", message_timestamp=int(now-600*i), address="100.101.102.103", username=u, service="MIDDLEWARE", event="METHOD_CALL",
+            event_data=dict(method=m, description=dsc), success=s) for i, (u, m, dsc, s) in enumerate([(USER, "app.stop", "Stop app qbittorrent", True), ("root", "pool.scrub.scrub", None, True), (USER, "system.reboot", None, False), ("admin", "auth.login_ex", "Authentication", True)])],
+      "reporting.netdata_graphs": lambda: [dict(name="cpu", title="CPU Usage", vertical_label="%CPU", identifiers=None), dict(name="memory", title="Physical memory utilization", vertical_label="Bytes", identifiers=None),
+            dict(name="interface", title="Interface Traffic ({identifier})", vertical_label="Kilobits/s", identifiers=["enp6s0"]), dict(name="disktemp", title="Disks Temperature ({identifier})", vertical_label="Celsius", identifiers=["sda", "sdb"])],
+      "reporting.netdata_get_data": lambda: [dict(name=g["name"], identifier=g.get("identifier"), legend=["time", "user", "system"] if g["name"] == "cpu" else ["time", "received", "sent"] if g["name"] == "interface" else ["time", "value"],
+            data=[[int(now-60*k)] + [abs(30*__import__("math").sin(k/9))+random.random()*5 + j*4 for j in range(2 if g["name"] in ("cpu", "interface") else 1)] for k in range(120, 0, -1)], aggregations={}, start=1, end=2) for g in params[0]],
+      "user.query": lambda: [dict(id=1, uid=0, username="root", full_name="root", builtin=True, locked=False, smb=False, password_disabled=True, twofactor_auth_configured=False, roles=["FULL_ADMIN"], api_keys=[]),
+            dict(id=70, uid=950, username=USER, full_name="TrueNAS Admin", builtin=False, locked=False, smb=False, password_disabled=False, twofactor_auth_configured=True, roles=["FULL_ADMIN"], api_keys=[3]),
+            dict(id=71, uid=3000, username="phone", full_name="Phone (read-only)", builtin=False, locked=False, smb=False, password_disabled=True, twofactor_auth_configured=False, roles=["READONLY_ADMIN"], api_keys=[7])],
+      "sharing.smb.query": lambda: by_id(SMB_SHARES, params),
+      "sharing.nfs.query": lambda: by_id(NFS_SHARES, params),
+      "vm.query": lambda: [dict(id=1, name="HomeAssistant", description="HAOS", vcpus=1, cores=2, threads=1, memory=4096, autostart=True, bootloader="UEFI", status=dict(state="RUNNING", pid=1234, domain_state="RUNNING")),
+            dict(id=2, name="Windows11", description="", vcpus=1, cores=4, threads=2, memory=16384, autostart=False, bootloader="UEFI", status=dict(state="STOPPED", pid=None, domain_state="SHUTOFF"))],
+      "container.query": lambda: [dict(id=1, name="debian-dev", description="Debian 13 dev box", autostart=False, dataset="tank/containers/debian-dev", status=dict(state="RUNNING", pid=4321))],
+      "core.get_jobs": lambda: [],
+    }
 
 async def main_handler(ws):
     subs = {}
@@ -235,45 +277,7 @@ async def main_handler(ws):
                 if base == "app.container_log_follow": asyncio.create_task(logs_loop(sid))
                 continue
             if method == "core.unsubscribe": subs.pop(params[0], None); await ok(None); continue
-            r = {
-              "system.info": lambda: SYSINFO, "auth.me": lambda: {}, "privilege.roles": lambda: ROLE_TABLE, "pool.query": lambda: POOLS, "disk.query": lambda: DISKS,
-              "disk.temperatures": lambda: {d["name"]: 34 + i for i, d in enumerate(DISKS)},
-              "alert.list": lambda: ALERTS, "service.query": lambda: SERVICES,
-              "app.query": lambda: app_query(params),
-              "filesystem.listdir": lambda: [dict(name=n, path=f"{params[0].rstrip('/')}/{n}", type="DIRECTORY") for n in DIRS.get(params[0].rstrip('/'), [])],
-              "app.upgrade_summary": lambda: dict(latest_version="1.3.0", latest_human_version="10.11.0_1.3.0", upgrade_version="1.3.0", upgrade_human_version="10.11.0_1.3.0",
-                  available_versions_for_upgrade=[dict(version="1.3.0", human_version="10.11.0_1.3.0", changelog="<p>Jellyfin 10.11.0 with library performance improvements.</p>")]),
-              "app.rollback_versions": lambda: ["1.1.9", "1.1.8"],
-              "pool.dataset.query": lambda: DATASETS, "zfs.resource.snapshot.query": lambda: snaps(params[0]["paths"][0] if params[0]["paths"] else "tank"),
-              "pool.snapshottask.query": lambda: [dict(id=1, dataset="tank/media", recursive=True, lifetime_value=2, lifetime_unit="WEEK", enabled=True, naming_schema="auto-%Y-%m-%d_%H-%M",
-                    schedule=dict(minute="0", hour="0", dom="*", month="*", dow="*"), state=dict(state="FINISHED", datetime={"$date": int((now-3600*2)*1000)}))],
-              "replication.query": lambda: [dict(id=1, name="tank/media to backup box", direction="PUSH", transport="SSH", source_datasets=["tank/media"], target_dataset="backup/media", enabled=True, auto=True,
-                    state=dict(state="ERROR", datetime={"$date": int((now-86400)*1000)}, error="ssh: connect to host 10.0.0.9 port 22: No route to host"))],
-              "cloudsync.query": lambda: [dict(id=1, description="Photos to B2", path="/mnt/tank/apps/immich", direction="PUSH", transfer_mode="SYNC", enabled=True,
-                    schedule=dict(minute="0", hour="3", dom="*", month="*", dow="*"), credentials=dict(name="Backblaze B2"), job=dict(state="SUCCESS", time_finished=iso(now-80000)))],
-              "pool.scrub.query": lambda: [dict(id=1, pool=1, pool_name="tank", threshold=35, description="", enabled=True, schedule=dict(minute="00", hour="00", dom="*", month="*", dow="7"))],
-              "update.status": lambda: dict(code="NORMAL", status=dict(current_version=dict(train="TrueNAS-SCALE-Goldeye", profile="GENERAL", matches_profile=True),
-                    new_version=dict(version="26.0.0-BETA.2", manifest={}, release_notes="Bug fixes and improvements to the apps subsystem.", release_notes_url="https://www.truenas.com/docs/")), error=None, update_download_progress=None),
-              "boot.environment.query": lambda: [dict(id="26.0.0-BETA.1", dataset="boot-pool/ROOT/26.0.0-BETA.1", active=True, activated=True, created=iso(now-86400*12), used_bytes=3*GiB, keep=False, can_activate=True),
-                    dict(id="25.10.2", dataset="boot-pool/ROOT/25.10.2", active=False, activated=False, created=iso(now-86400*60), used_bytes=int(2.8*GiB), keep=True, can_activate=True)],
-              "interface.query": lambda: [dict(id="enp6s0", name="enp6s0", type="PHYSICAL", description="", mtu=1500, ipv4_dhcp=False, aliases=[dict(type="INET", address="192.168.0.78", netmask=24)],
-                    state=dict(link_state="LINK_STATE_UP", link_address="d8:5e:d3:00:11:22", active_media_subtype="2500Base-T", aliases=[dict(type="INET", address="192.168.0.78", netmask=24)]))],
-              "audit.query": lambda: [dict(audit_id=f"x{i}", message_timestamp=int(now-600*i), address="100.101.102.103", username=u, service="MIDDLEWARE", event="METHOD_CALL",
-                    event_data=dict(method=m, description=dsc), success=s) for i, (u, m, dsc, s) in enumerate([(USER, "app.stop", "Stop app qbittorrent", True), ("root", "pool.scrub.scrub", None, True), (USER, "system.reboot", None, False), ("admin", "auth.login_ex", "Authentication", True)])],
-              "reporting.netdata_graphs": lambda: [dict(name="cpu", title="CPU Usage", vertical_label="%CPU", identifiers=None), dict(name="memory", title="Physical memory utilization", vertical_label="Bytes", identifiers=None),
-                    dict(name="interface", title="Interface Traffic ({identifier})", vertical_label="Kilobits/s", identifiers=["enp6s0"]), dict(name="disktemp", title="Disks Temperature ({identifier})", vertical_label="Celsius", identifiers=["sda", "sdb"])],
-              "reporting.netdata_get_data": lambda: [dict(name=g["name"], identifier=g.get("identifier"), legend=["time", "user", "system"] if g["name"] == "cpu" else ["time", "received", "sent"] if g["name"] == "interface" else ["time", "value"],
-                    data=[[int(now-60*k)] + [abs(30*__import__("math").sin(k/9))+random.random()*5 + j*4 for j in range(2 if g["name"] in ("cpu", "interface") else 1)] for k in range(120, 0, -1)], aggregations={}, start=1, end=2) for g in params[0]],
-              "user.query": lambda: [dict(id=1, uid=0, username="root", full_name="root", builtin=True, locked=False, smb=False, password_disabled=True, twofactor_auth_configured=False, roles=["FULL_ADMIN"], api_keys=[]),
-                    dict(id=70, uid=950, username=USER, full_name="TrueNAS Admin", builtin=False, locked=False, smb=False, password_disabled=False, twofactor_auth_configured=True, roles=["FULL_ADMIN"], api_keys=[3]),
-                    dict(id=71, uid=3000, username="phone", full_name="Phone (read-only)", builtin=False, locked=False, smb=False, password_disabled=True, twofactor_auth_configured=False, roles=["READONLY_ADMIN"], api_keys=[7])],
-              "sharing.smb.query": lambda: by_id(SMB_SHARES, params),
-              "sharing.nfs.query": lambda: by_id(NFS_SHARES, params),
-              "vm.query": lambda: [dict(id=1, name="HomeAssistant", description="HAOS", vcpus=1, cores=2, threads=1, memory=4096, autostart=True, bootloader="UEFI", status=dict(state="RUNNING", pid=1234, domain_state="RUNNING")),
-                    dict(id=2, name="Windows11", description="", vcpus=1, cores=4, threads=2, memory=16384, autostart=False, bootloader="UEFI", status=dict(state="STOPPED", pid=None, domain_state="SHUTOFF"))],
-              "container.query": lambda: [dict(id=1, name="debian-dev", description="Debian 13 dev box", autostart=False, dataset="tank/containers/debian-dev", status=dict(state="RUNNING", pid=4321))],
-              "core.get_jobs": lambda: [],
-            }.get(method)
+            r = responses(params).get(method)
             if r: await ok(r()); continue
             if method in ("app.stop", "app.start", "app.redeploy", "app.upgrade", "app.rollback"):
                 name = params[0]
@@ -315,4 +319,5 @@ async def main():
         print("mock up on 8443", flush=True)
         await asyncio.Future()
 
-asyncio.run(main())
+if __name__ == "__main__":
+    asyncio.run(main())
