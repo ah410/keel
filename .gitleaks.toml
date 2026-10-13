@@ -12,5 +12,5 @@ paths = [
 
 [[allowlists]]
 description = "F-Droid's AllowedAPKSigningKeys is the public signing certificate's SHA-256, not a secret"
-regexTarget = "line"
-regexes = ['''^AllowedAPKSigningKeys: [0-9a-f]{64}$''']
+regexTarget = "match"
+regexes = ['''AllowedAPKSigningKeys: 47ba2ba3ea64c6ef9b53267325c5ceb1ac95965faec91987bd6fe2d5ea603eda''']
